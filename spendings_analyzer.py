@@ -27,6 +27,17 @@ def CreateArgumentParser():
         help="Use to provide a path to where store the output file."
     )
 
+    parser.add_argument(
+        "-s",
+        "--sort_by",
+        action="store",
+        required=False,
+        choices=["date", "name", "mcc", "sum"],
+        default="date",
+        help="Use to indicate how to sort output. Default = '{}'.".format(
+            "date")
+    )
+
     return parser
 
 
@@ -63,8 +74,8 @@ def ParseCsv(path_to_table):
             date_time = row[0]
             date = date_time.split(sep=" ")[0]
             operation_name = row[1]
-            operation_mcc = row[2]
-            operation_sum = row[3]
+            operation_mcc = int(row[2])
+            operation_sum = float(row[3])
 
             spendings.append(Spending(date, operation_name,
                              operation_mcc, operation_sum))
@@ -82,17 +93,22 @@ def WriteToCsv(path_to_table, spendings):
             writer.writerow(sp.ToList())
 
 
+def SortBy(spendings, key):
+    if key == "name":
+        return sorted(spendings, key=lambda spending: spending.name)
+    elif key == "date":
+        return sorted(spendings, key=lambda spending: spending.date)
+    elif key == "mcc":
+        return sorted(spendings, key=lambda spending: spending.mcc)
+    else:
+        return sorted(spendings, key=lambda spending: spending.sum)
+
+
 if __name__ == "__main__":
     parser = CreateArgumentParser()
     args = parser.parse_args()
 
-    print("Input: {}, Output: {}".format(args.input, args.output))
-
     spendings = ParseCsv(args.input)
-
-    spendings.sort()
+    spendings = SortBy(spendings, args.sort_by)
 
     WriteToCsv(args.output, spendings)
-
-    for sp in spendings:
-        print(sp.ToString())
